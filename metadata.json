@@ -1,0 +1,8 @@
+{
+  "name": "DonishUp",
+  "description": "A complete educational ecosystem combining the best features of EduPage, Notion, and an AI Tutor.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}

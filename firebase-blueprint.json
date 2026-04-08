@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "Message": {
+      "title": "Message",
+      "description": "A chat message",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "description": "Message content" },
+        "sender_id": { "type": "string", "description": "ID of the sender" },
+        "senderName": { "type": "string", "description": "Name of the sender" },
+        "role": { "type": "string", "description": "Role of the sender" },
+        "class_id": { "type": "string", "description": "Class ID for group chats" },
+        "image": { "type": "string", "description": "Base64 image data" },
+        "timestamp": { "type": "number", "description": "Timestamp of the message" }
+      },
+      "required": ["sender_id", "senderName", "timestamp"]
+    },
+    "Room": {
+      "title": "Room",
+      "description": "A video chat room",
+      "type": "object",
+      "properties": {
+        "offer": { "type": "object", "description": "WebRTC offer" },
+        "answer": { "type": "object", "description": "WebRTC answer" },
+        "callerId": { "type": "string", "description": "ID of the caller" },
+        "answererId": { "type": "string", "description": "ID of the answerer" }
+      }
+    },
+    "IceCandidate": {
+      "title": "IceCandidate",
+      "description": "WebRTC ICE candidate",
+      "type": "object",
+      "properties": {
+        "candidate": { "type": "object" },
+        "senderId": { "type": "string" },
+        "timestamp": { "type": "number" }
+      }
+    },
+    "TypingStatus": {
+      "title": "TypingStatus",
+      "description": "User typing status",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "isTyping": { "type": "boolean" },
+        "timestamp": { "type": "number" }
+      }
+    }
+  },
+  "firestore": {
+    "messages/{messageId}": {
+      "schema": { "$ref": "#/entities/Message" },
+      "description": "Global or class-specific messages"
+    },
+    "rooms/{roomId}": {
+      "schema": { "$ref": "#/entities/Room" },
+      "description": "WebRTC signaling rooms"
+    },
+    "rooms/{roomId}/callerCandidates/{id}": {
+      "schema": { "$ref": "#/entities/IceCandidate" },
+      "description": "ICE candidates from caller"
+    },
+    "rooms/{roomId}/answererCandidates/{id}": {
+      "schema": { "$ref": "#/entities/IceCandidate" },
+      "description": "ICE candidates from answerer"
+    },
+    "typing/{classId}/users/{userId}": {
+      "schema": { "$ref": "#/entities/TypingStatus" },
+      "description": "Real-time typing indicators"
+    }
+  }
+}

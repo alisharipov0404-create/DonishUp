@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DonishUp - Global Architect Edition</title>
+    <link rel="stylesheet" href="/src/styles.css">
+    <link rel="manifest" href="/public/manifest.json">
+    <script>
+        window.safeLucide = function() {
+            try {
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            } catch (e) {
+                console.warn("Lucide error:", e);
+            }
+        };
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- MathJax for LaTeX rendering -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Model Viewer for 3D Models -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <!-- Three.js for Login Animation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script id="gemini-api-key-script">
+        window.__GEMINI_API_KEY__ = "__GEMINI_API_KEY_PLACEHOLDER__";
+    </script>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 z-[9999] flex flex-col items-center justify-center hidden" style="background-color: var(--bg-main); opacity: 0.9;">
+        <div class="w-16 h-16 bg-teal-600 rounded-xl flex items-center justify-center mb-4 animate-pulse">
+            <i data-lucide="book-open" class="text-white w-8 h-8"></i>
+        </div>
+        <div class="text-teal-800 font-bold text-xl tracking-wider">DonishUp</div>
+    </div>
+
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="login-screen" class="screen active">
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="logo-icon-square">
+                        <i data-lucide="graduation-cap" class="w-8 h-8"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold uppercase tracking-wider" style="color: var(--color-donishup-navy);" data-i18n="login_title">DonishUp</h1>
+                    <p class="text-secondary text-sm" data-i18n="login_subtitle">Образовательная Экосистема</p>
+                </div>
+                
+                <div id="login-form-container">
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label class="login-label" data-i18n="select_class">Выберите Класс / Роль</label>
+                            <select id="login-class" required class="select-input mb-4">
+                                <option value="" disabled selected data-i18n="select_class">Выберите Класс / Роль</option>
+                                <option value="Admin">Админ</option>
+                                <optgroup label="Начальная">
+                                    <option value="1-A">1-A</option><option value="1-B">1-B</option>
+                                    <option value="2-A">2-A</option><option value="2-B">2-B</option>
+                                    <option value="3-A">3-A</option><option value="3-B">3-B</option>
+                                    <option value="4-A">4-A</option><option value="4-B">4-B</option>
+                                </optgroup>
+                                <optgroup label="Средняя">
+                                    <option value="5-A">5-A</option><option value="5-B">5-B</option>
+                                    <option value="6-A">6-A</option><option value="6-B">6-B</option>
+                                    <option value="7-A">7-A</option><option value="7-B">7-B</option>
+                                    <option value="8-A">8-A</option><option value="8-B">8-B</option>
+                                </optgroup>
+                                <optgroup label="Старшая">
+                                    <option value="9-B">9-B</option><option value="9-C">9-C</option>
+                                    <option value="10-B">10-B</option><option value="10-C">10-C</option>
+                                    <option value="11-B">11-B</option><option value="11-C">11-C</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="login-label" data-i18n="login_label">Логин</label>
+                            <input type="text" id="username" class="input-field" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="login-label" data-i18n="password_label">Пароль</label>
+                            <input type="password" id="password" class="input-field" required>
+                        </div>
+                        <button type="submit" class="btn-primary w-full mt-4" data-i18n="login_btn">Войти</button>
+                    </form>
+
+                    <div class="login-divider"><span>OR</span></div>
+
+                    <button id="google-signin-btn" class="btn-google w-full">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" class="w-5 h-5">
+                        <span data-i18n="google_signin">Войти через Google (Личный)</span>
+                    </button>
+                </div>
+
+                <!-- Quick Login for Testing -->
+                <div id="quick-login-container" class="hidden flex-col gap-3">
+                    <button class="btn-primary w-full" onclick="window.quickLogin('admin', '123')">Войти как Админ</button>
+                    <button class="btn-primary w-full" onclick="window.quickLogin('teacher1', '123')">Войти как Учитель (9-B)</button>
+                    <button class="btn-primary w-full" onclick="window.quickLogin('student1', '123')">Войти как Ученик (9-B)</button>
+                    <button class="btn-primary w-full" onclick="window.quickLogin('parent1', '123')">Войти как Родитель</button>
+                    <button class="btn-primary w-full" onclick="window.quickLogin('personal1', '123')">Войти как Личный (Google)</button>
+                </div>
+
+                <div id="login-error" class="error-text hidden"></div>
+                
+                <div class="demo-credentials">
+                    <p data-i18n="demo_credentials">Demo: Admin (admin/123), 9-B (student1/123), 9-B (teacher1/123)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App Screen -->
+        <div id="main-screen" class="screen hidden">
+            <!-- Mobile Header -->
+            <div class="mobile-header">
+                <button id="mobile-menu-btn" class="btn-icon"><i data-lucide="menu"></i></button>
+                <div class="flex items-center gap-2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-teal-600">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                        <path d="M12 8v13"></path>
+                        <path d="M18 4a3 3 0 0 0-3 3"></path>
+                        <polyline points="15 4 18 4 18 7"></polyline>
+                    </svg>
+                    <div class="logo-text">DonishUp</div>
+                </div>
+                <div class="mobile-avatar"></div>
+            </div>
+
+            <!-- Voice Assistant Button -->
+            <button id="geek-mic" class="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:text-red-500 transition-all duration-300 border" style="background: var(--surface-color); color: var(--text-secondary); border-color: var(--surface-border);" onclick="window.voiceAssistant.toggle()">
+                <i data-lucide="mic" class="w-6 h-6"></i>
+            </button>
+
+            <!-- Sidebar -->
+            <aside id="sidebar">
+                <div class="sidebar-header">
+                    <div class="logo-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                            <path d="M12 8v13"></path>
+                            <path d="M18 4a3 3 0 0 0-3 3"></path>
+                            <polyline points="15 4 18 4 18 7"></polyline>
+                        </svg>
+                    </div>
+                    <h2>DonishUp</h2>
+                </div>
+                
+                <div class="user-profile-mini cursor-pointer" onclick="window.openProfileModal()">
+                    <div id="user-avatar" class="avatar"></div>
+                    <div class="user-info">
+                        <div id="user-name-display" class="font-bold">Name</div>
+                        <div id="user-class-display" class="text-xs text-secondary">Class</div>
+                    </div>
+                </div>
+
+                <nav id="main-nav">
+                    <a href="#" data-view="dashboard" class="nav-item active"><i data-lucide="home"></i> <span data-i18n="nav_dashboard">Главная</span></a>
+                    <a href="#" data-view="homework" class="nav-item school-only"><i data-lucide="check-square"></i> <span data-i18n="nav_homework">Домашнее Задание</span></a>
+                    <a href="#" data-view="schedule" class="nav-item school-only"><i data-lucide="calendar"></i> <span data-i18n="nav_schedule">Расписание</span></a>
+                    <a href="#" data-view="grades" class="nav-item school-only"><i data-lucide="bar-chart-2"></i> <span data-i18n="nav_grades">Оценки</span></a>
+                    <a href="#" data-view="textbooks" class="nav-item"><i data-lucide="book"></i> <span data-i18n="nav_textbooks">Учебники</span></a>
+                    <a href="#" data-view="notebooks" class="nav-item"><i data-lucide="edit-3"></i> <span data-i18n="nav_notebooks">Тетради</span></a>
+                    <a href="#" data-view="habits" class="nav-item"><i data-lucide="calendar-check"></i> <span data-i18n="nav_habits">Habit Tracker</span></a>
+                    <a href="#" data-view="quests" class="nav-item"><i data-lucide="zap"></i> <span data-i18n="nav_quests">Ежедневные Квесты</span></a>
+                    <a href="#" data-view="knowledge" class="nav-item school-only"><i data-lucide="network"></i> <span data-i18n="nav_knowledge">Дерево Знаний</span></a>
+                    <a href="#" data-view="leaderboard" class="nav-item non-admin"><i data-lucide="trophy"></i> <span data-i18n="nav_leaderboard">Лидерборд</span></a>
+                    <a href="#" data-view="achievements" class="nav-item non-admin"><i data-lucide="award"></i> <span data-i18n="nav_achievements">Достижения</span></a>
+                    <a href="#" data-view="lab" class="nav-item"><i data-lucide="microscope"></i> <span data-i18n="nav_lab">Лаборатория</span></a>
+                    <a href="#" data-view="live" class="nav-item school-only"><i data-lucide="video"></i> <span data-i18n="nav_live">Онлайн Уроки</span></a>
+                    <a href="#" data-view="chat" class="nav-item school-only"><i data-lucide="message-circle"></i> <span data-i18n="nav_chat">Чат</span></a>
+                    <a href="#" data-view="tutor" class="nav-item"><i data-lucide="bot"></i> <span data-i18n="nav_tutor">ИИ-Репетитор</span></a>
+                    <a href="#" data-view="admin" class="nav-item admin-only hidden"><i data-lucide="shield"></i> <span data-i18n="nav_admin">Админ Панель</span></a>
+                    <a href="#" data-view="settings" class="nav-item"><i data-lucide="settings"></i> <span data-i18n="nav_settings">Настройки</span></a>
+                </nav>
+                
+                <div class="sidebar-footer">
+                    <button id="focus-sidebar-btn" class="btn-ghost w-full justify-start text-donishup-blue font-bold mb-2" onclick="window.focusTimer.toggleWidget()">
+                        <i data-lucide="timer"></i> <span data-i18n="focus_mode">Focus Mode</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main id="main-content">
+                <div id="view-container" class="view-container">
+                    
+                    <!-- Daily Quests View -->
+                    <div id="view-quests" class="view hidden">
+                        <header class="view-header">
+                            <h1 data-i18n="daily_quests_title">Ежедневные Квесты</h1>
+                            <p class="text-secondary" data-i18n="daily_quests_subtitle">Выполняйте задания, чтобы заработать XP</p>
+                        </header>
+                        <div class="panel mt-6">
+                            <div id="quests-view-container" class="space-y-4">
+                                <!-- Quests will be injected here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard View -->
+                    <div id="view-dashboard" class="view active">
+                        <header class="view-header flex justify-between items-center">
+                            <h1 id="welcome-text">С возвращением!</h1>
+                            <div class="flex items-center gap-4 flex-1 max-w-md mx-4">
+                                <div class="relative w-full hidden md:block">
+                                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                                    <input type="text" id="global-search" class="w-full bg-gray-100 border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-teal-500" placeholder="Поиск по урокам, тетрадям, ИИ...">
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button class="btn-ghost relative p-2 rounded-full hover:bg-gray-100 transition-colors">
+                                    <i data-lucide="bell" class="w-5 h-5"></i>
+                                    <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                                </button>
+                                <button class="btn-ghost p-2 rounded-full hover:bg-gray-100 transition-colors" onclick="window.openProfileModal()">
+                                    <i data-lucide="user" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </header>
+                        
+                        <div id="dashboard-grid" class="dashboard-grid">
+                            <!-- Top Cards -->
+                            <div class="dash-card card-orange">
+                                <div class="card-icon"><i data-lucide="clipboard-list"></i></div>
+                                <div class="card-content">
+                                    <h3 data-i18n="dash_homework">Домашнее задание</h3>
+                                    <p>2 новых задания!</p>
+                                </div>
+                                <button class="btn-white-outline" onclick="window.appRouter.navigate('homework')"><span data-i18n="open_materials">Открыть</span> <i data-lucide="chevron-right"></i></button>
+                            </div>
+                            
+                            <div class="dash-card card-blue">
+                                <div class="card-icon"><i data-lucide="message-square"></i></div>
+                                <div class="card-content">
+                                    <h3 data-i18n="dash_messages">Сообщения</h3>
+                                    <p>3 непрочитанных</p>
+                                </div>
+                                <button class="btn-white-outline" onclick="window.appRouter.navigate('chat')"><span data-i18n="open_materials">Открыть</span> <i data-lucide="chevron-right"></i></button>
+                            </div>
+                            
+                            <div class="dash-card card-green">
+                                <div class="card-icon"><i data-lucide="book-open"></i></div>
+                                <div class="card-content">
+                                    <h3 data-i18n="dash_textbooks">Учебники</h3>
+                                    <p>Математика, Биология</p>
+                                </div>
+                                <button class="btn-white-outline" onclick="window.appRouter.navigate('textbooks')"><span data-i18n="open_materials">Открыть</span> <i data-lucide="chevron-right"></i></button>
+                            </div>
+                            
+                            <div class="dash-card card-yellow">
+                                <div class="card-icon"><i data-lucide="edit"></i></div>
+                                <div class="card-content">
+                                    <h3 data-i18n="dash_notebooks">Тетради</h3>
+                                    <p>История, Английский</p>
+                                </div>
+                                <button class="btn-white-outline" onclick="window.appRouter.navigate('notebooks')"><span data-i18n="open_materials">Открыть</span> <i data-lucide="chevron-right"></i></button>
+                            </div>
+
+                            <div class="dash-card bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg">
+                                <div class="card-icon"><i data-lucide="calendar-check"></i></div>
+                                <div class="card-content">
+                                    <h3 data-i18n="nav_habits">Трекер Привычек</h3>
+                                    <p data-i18n="habit_tracker_desc">Отслеживайте свои ежедневные цели</p>
+                                </div>
+                                <button class="btn-white-outline" onclick="switchView('habits')"><span data-i18n="open_materials">Открыть</span> <i data-lucide="chevron-right"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-main-cols">
+                            <div class="col-left space-y-6">
+                                <!-- Habit Tracker Dashboard Widget -->
+                                <div class="panel">
+                                    <div class="panel-header">
+                                        <div class="flex items-center gap-2">
+                                            <h3 data-i18n="dash_habits">Трекер Привычек</h3>
+                                            <span id="dash-habit-counter" class="text-xs font-bold bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">0/0</span>
+                                        </div>
+                                        <button class="btn-text" onclick="switchView('habits')">
+                                            <span data-i18n="open_materials">Открыть</span> <i data-lucide="chevron-right"></i>
+                                        </button>
+                                    </div>
+                                    <div id="dash-habits-content" class="flex flex-col gap-2">
+                                        <!-- Habits will be injected here -->
+                                    </div>
+                                </div>
+
+                                <!-- Daily Quests Panel -->
+                                <div class="panel">
+                                    <div class="panel-header">
+                                        <div class="flex flex-col">
+                                            <h3 data-i18n="daily_quests_title">Ежедневные Квесты</h3>
+                                            <p class="text-[10px] text-secondary" data-i18n="daily_quests_subtitle">Выполняйте задания, чтобы заработать XP</p>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <i data-lucide="zap" class="w-4 h-4 text-teal-500 animate-pulse"></i>
+                                        </div>
+                                    </div>
+                                    <div id="daily-quests-container" class="space-y-3">
+                                        <!-- Quests will be injected here -->
+                                    </div>
+                                </div>
+
+                                <div class="panel">
+                                    <div class="panel-header">
+                                        <h3 data-i18n="dash_schedule">Расписание</h3>
+                                        <button class="btn-text" onclick="window.appRouter.navigate('schedule')"><span data-i18n="open_materials">Полное расписание</span> <i data-lucide="chevron-right"></i></button>
+                                    </div>
+                                    <div id="dash-schedule-content" class="schedule-list"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-right">
+                                <div class="panel">
+                                    <div class="panel-header">
+                                        <h3 data-i18n="dash_grades">Последние Оценки</h3>
+                                        <button class="btn-text" onclick="window.appRouter.navigate('grades')" data-i18n="open_materials">Все Оценки</button>
+                                    </div>
+                                    <div id="dash-grades-content" class="grades-list"></div>
+                                </div>
+                                
+                                <div class="panel mt-4">
+                                    <div class="panel-header">
+                                        <h3 data-i18n="grade_distribution">Распределение Оценок</h3>
+                                    </div>
+                                    <div class="grid grid-cols-4 gap-2 p-4">
+                                        <div class="flex flex-col items-center p-2 rounded bg-green-50 border border-green-100">
+                                            <span class="text-[10px] font-bold text-green-700">5</span>
+                                            <span id="dash-stat-5" class="text-lg font-bold">0</span>
+                                        </div>
+                                        <div class="flex flex-col items-center p-2 rounded bg-blue-50 border border-blue-100">
+                                            <span class="text-[10px] font-bold text-blue-700">4</span>
+                                            <span id="dash-stat-4" class="text-lg font-bold">0</span>
+                                        </div>
+                                        <div class="flex flex-col items-center p-2 rounded bg-yellow-50 border border-yellow-100">
+                                            <span class="text-[10px] font-bold text-yellow-700">3</span>
+                                            <span id="dash-stat-3" class="text-lg font-bold">0</span>
+                                        </div>
+                                        <div class="flex flex-col items-center p-2 rounded bg-red-50 border border-red-100">
+                                            <span class="text-[10px] font-bold text-red-700">2</span>
+                                            <span id="dash-stat-2" class="text-lg font-bold">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="panel mt-4">
+                                    <div class="panel-header">
+                                        <h3 data-i18n="dash_average">Средний Балл</h3>
+                                    </div>
+                                    <div id="dash-average-content" class="average-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Homework View -->
+                    <div id="view-homework" class="view hidden flex flex-col h-full">
+                        <header class="view-header flex justify-between items-center">
+                            <h1 data-i18n="view_homework_title">Домашнее Задание</h1>
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center gap-2 px-3 py-1 rounded-full shadow-sm" style="background: var(--surface-color);">
+                                    <button class="btn-ghost p-1" onclick="window.prevHomeworkDay()"><i data-lucide="chevron-left"></i></button>
+                                    <span id="hw-current-day" class="font-medium text-sm w-24 text-center">Завтра</span>
+                                    <button class="btn-ghost p-1" onclick="window.nextHomeworkDay()"><i data-lucide="chevron-right"></i></button>
+                                </div>
+                                <button class="btn-primary teacher-only hidden" onclick="openAddHomeworkModal()"><i data-lucide="plus"></i> <span data-i18n="add_homework">Добавить ДЗ</span></button>
+                            </div>
+                        </header>
+                        <div id="homework-kanban-container" class="flex-1 mt-4 overflow-hidden" style="min-height: 500px;">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Schedule View -->
+                    <div id="view-schedule" class="view hidden">
+                        <header class="view-header">
+                            <h1 data-i18n="view_schedule_title">Расписание Занятий</h1>
+                        </header>
+                        <div class="panel">
+                            <div id="full-schedule-grid" class="full-schedule-grid"></div>
+                        </div>
+                    </div>
+
+                    <!-- Grades View -->
+                    <div id="view-grades" class="view hidden">
+                        <header class="view-header flex items-center justify-between">
+                            <h1 data-i18n="view_grades_title" class="flex-1">Оценки и Успеваемость</h1>
+                            <div id="grades-filter-container" class="hidden flex items-center gap-2 flex-1 justify-center">
+                                <span class="text-gray-500 font-medium" data-i18n="subject_header">Предмет:</span>
+                                <select id="grades-subject-filter" class="select-input w-48 py-1 font-bold text-donishup-navy bg-gray-50 border-none shadow-sm" onchange="loadGrades()">
+                                    <!-- Options populated dynamically -->
+                                </select>
+                            </div>
+                            <div id="grades-actions-container" class="flex-1 flex justify-end"></div>
+                        </header>
+                        
+                        <h3 class="font-bold mb-4" data-i18n="grade_distribution">Распределение Оценок</h3>
+                        <!-- Grade Statistics -->
+                        <div id="grade-stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <div class="panel p-4 flex flex-col items-center justify-center border-l-4 border-green-500">
+                                <span class="text-xs text-secondary uppercase font-bold tracking-wider mb-1" data-i18n="grade_5">Оценка 5</span>
+                                <span id="stat-grade-5" class="text-2xl font-bold">0</span>
+                            </div>
+                            <div class="panel p-4 flex flex-col items-center justify-center border-l-4 border-blue-500">
+                                <span class="text-xs text-secondary uppercase font-bold tracking-wider mb-1" data-i18n="grade_4">Оценка 4</span>
+                                <span id="stat-grade-4" class="text-2xl font-bold">0</span>
+                            </div>
+                            <div class="panel p-4 flex flex-col items-center justify-center border-l-4 border-yellow-500">
+                                <span class="text-xs text-secondary uppercase font-bold tracking-wider mb-1" data-i18n="grade_3">Оценка 3</span>
+                                <span id="stat-grade-3" class="text-2xl font-bold">0</span>
+                            </div>
+                            <div class="panel p-4 flex flex-col items-center justify-center border-l-4 border-red-500">
+                                <span class="text-xs text-secondary uppercase font-bold tracking-wider mb-1" data-i18n="grade_2">Оценка 2</span>
+                                <span id="stat-grade-2" class="text-2xl font-bold">0</span>
+                            </div>
+                        </div>
+
+                        <div class="panel overflow-x-auto">
+                            <table id="grades-table" class="data-table">
+                                <thead><tr id="grades-header-row"></tr></thead>
+                                <tbody id="grades-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Textbooks View -->
+                    <div id="view-textbooks" class="view hidden">
+                        <header class="view-header flex justify-between items-center">
+                            <div>
+                                <h1 data-i18n="view_textbooks_title">Интерактивные Учебники</h1>
+                                <p class="text-secondary" data-i18n="view_textbooks_subtitle">Ваша интерактивная библиотека.</p>
+                            </div>
+                            <label id="upload-pdf-btn" class="btn-primary cursor-pointer admin-teacher-only">
+                                <i data-lucide="upload"></i> <span data-i18n="upload_pdf">Загрузить PDF</span>
+                                <input type="file" id="pdf-upload-input" accept="application/pdf" class="hidden">
+                            </label>
+                        </header>
+                        <div class="textbooks-grid" id="textbooks-list">
+                            <!-- Mocked PDFs -->
+                            <div class="textbook-card" onclick="openPdfViewer('Math Grade 9')">
+                                <div class="tb-cover bg-donishup-blue/10 text-donishup-blue"><i data-lucide="book"></i></div>
+                                <h4>Математика 9 Класс</h4>
+                            </div>
+                            <div class="textbook-card" onclick="openPdfViewer('Biology Grade 9')">
+                                <div class="tb-cover bg-green-100 text-green-600"><i data-lucide="book"></i></div>
+                                <h4>Биология 9 Класс</h4>
+                            </div>
+                        </div>
+                        
+                        <!-- PDF Viewer Modal -->
+                        <div id="pdf-viewer" class="fullscreen-modal hidden">
+                            <div class="pdf-toolbar">
+                                <button class="btn-icon" onclick="closePdfViewer()"><i data-lucide="arrow-left"></i></button>
+                                <h3 id="pdf-title">Учебник</h3>
+                                <div class="markers" id="pdf-markers">
+                                    <button class="marker-btn" style="background: rgba(255, 255, 0, 0.4)" title="Yellow" onclick="window.setActiveMarker('rgba(255, 255, 0, 0.4)')"></button>
+                                    <button class="marker-btn" style="background: rgba(0, 255, 0, 0.4)" title="Green" onclick="window.setActiveMarker('rgba(0, 255, 0, 0.4)')"></button>
+                                    <button class="marker-btn" style="background: rgba(0, 255, 255, 0.4)" title="Cyan" onclick="window.setActiveMarker('rgba(0, 255, 255, 0.4)')"></button>
+                                    <button class="marker-btn" style="background: rgba(255, 0, 255, 0.4)" title="Magenta" onclick="window.setActiveMarker('rgba(255, 0, 255, 0.4)')"></button>
+                                    <button class="marker-btn" style="background: rgba(255, 165, 0, 0.4)" title="Orange" onclick="window.setActiveMarker('rgba(255, 165, 0, 0.4)')"></button>
+                                    <button class="marker-btn" style="background: rgba(255, 192, 203, 0.4)" title="Pink" onclick="window.setActiveMarker('rgba(255, 192, 203, 0.4)')"></button>
+                                    <button class="marker-btn" style="background: rgba(173, 216, 230, 0.4)" title="Light Blue" onclick="window.setActiveMarker('rgba(173, 216, 230, 0.4)')"></button>
+                                    <button class="marker-btn" style="background: rgba(221, 160, 221, 0.4)" title="Plum" onclick="window.setActiveMarker('rgba(221, 160, 221, 0.4)')"></button>
+                                    <button class="marker-btn" style="background: rgba(144, 238, 144, 0.4)" title="Light Green" onclick="window.setActiveMarker('rgba(144, 238, 144, 0.4)')"></button>
+                                    <button class="marker-btn" style="background: rgba(255, 99, 71, 0.4)" title="Tomato" onclick="window.setActiveMarker('rgba(255, 99, 71, 0.4)')"></button>
+                                </div>
+                                <button class="btn-icon" onclick="toggleFullscreen('pdf-viewer')"><i data-lucide="maximize"></i></button>
+                            </div>
+                            <div class="pdf-content page-flip-container">
+                                <div class="pdf-page edu-content">
+                                    <h2 class="edu-bold">Глава 1</h2>
+                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                                    <p class="edu-italic">Выделите текст, чтобы использовать маркеры.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notebooks View -->
+                    <div id="view-notebooks" class="view hidden">
+                        <header class="view-header flex justify-between items-center">
+                            <h1 data-i18n="view_notebooks_title">Умные Тетради</h1>
+                            <button class="btn-primary" id="create-notebook-btn"><i data-lucide="plus"></i> <span data-i18n="create_notebook_btn">Новая Тетрадь</span></button>
+                        </header>
+                        
+                        <div class="notebooks-grid" id="smart-notebooks-list"></div>
+
+                        <!-- Notebook Editor -->
+                        <div id="notebook-editor" class="fullscreen-modal hidden">
+                            <div class="nb-toolbar">
+                                <button class="btn-icon" onclick="closeNotebook()"><i data-lucide="arrow-left"></i></button>
+                                <input type="text" id="nb-title" class="nb-title-input" value="Без названия">
+                                <div class="nb-actions flex items-center gap-2">
+                                    <button class="btn-outline text-xs py-1 px-2" onclick="notebooks.addNotionBlock('text')"><i data-lucide="type" class="w-4 h-4"></i> Текст</button>
+                                    <button class="btn-outline text-xs py-1 px-2" onclick="notebooks.addNotionBlock('kanban')"><i data-lucide="trello" class="w-4 h-4"></i> Канбан</button>
+                                    <button class="btn-outline text-xs py-1 px-2 text-purple-600 border-purple-200 hover:bg-purple-50" onclick="notebooks.addNotionBlock('ai')"><i data-lucide="sparkles" class="w-4 h-4"></i> ИИ Генерация</button>
+                                    <select id="nb-template-select" class="select-input text-xs py-1">
+                                        <option value="blank">В линейку</option>
+                                        <option value="squared">В клетку</option>
+                                        <option value="math">Математика</option>
+                                        <option value="chemistry">Химия</option>
+                                        <option value="history">История</option>
+                                        <option value="biology">Биология</option>
+                                        <option value="economics">Экономика</option>
+                                    </select>
+                                    <span id="nb-save-status" class="text-xs text-secondary w-12 text-right">Сохранено</span>
+                                </div>
+                            </div>
+                            <div id="nb-paper-container" class="nb-paper-container">
+                                <!-- Paper content injected here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Knowledge Graph View -->
+                    <div id="view-knowledge" class="view hidden">
+                        <header class="view-header">
+                            <h1 data-i18n="view_knowledge_title">Дерево Знаний</h1>
+                            <p class="text-secondary" data-i18n="view_knowledge_subtitle">Визуализируйте свой прогресс и открывайте новые навыки.</p>
+                        </header>
+                        <div class="panel" style="height: 600px; position: relative; overflow: hidden; background: #f0f4f8; border-radius: 16px;">
+                            <div id="knowledge-graph-container" style="width: 100%; height: 100%; position: relative;">
+                                <!-- Nodes and lines will be injected here -->
+                                <svg id="knowledge-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
+                                <div id="knowledge-nodes"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leaderboard View -->
+                    <div id="view-leaderboard" class="view hidden">
+                        <header class="view-header">
+                            <h1 data-i18n="nav_leaderboard">Лидерборд</h1>
+                            <p class="text-secondary">Топ учеников школы по количеству XP.</p>
+                        </header>
+                        <div class="panel p-0 overflow-hidden">
+                            <div id="leaderboard-container">
+                                <!-- Injected by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Achievements View -->
+                    <div id="view-achievements" class="view hidden">
+                        <header class="view-header">
+                            <h1 data-i18n="nav_achievements">Достижения</h1>
+                            <p class="text-secondary">Ваши награды за успехи в учебе.</p>
+                        </header>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="achievements-container">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- 3D Lab View -->
+                    <div id="view-lab" class="view hidden">
+                        <header class="view-header">
+                            <h1 data-i18n="nav_lab">Лаборатория</h1>
+                            <p class="text-secondary">Интерактивные модели для глубокого изучения предметов.</p>
+                        </header>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="lab-container">
+                            <!-- Anatomy with Upload -->
+                            <div class="panel flex flex-col gap-4">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="font-bold">Анатомия Человека</h3>
+                                    <label class="btn-primary cursor-pointer">
+                                        <i data-lucide="plus"></i>
+                                        <input type="file" id="upload-3d-model" accept=".glb,.gltf" class="hidden" onchange="window.labManager.uploadModel(event)">
+                                    </label>
+                                </div>
+                                <p class="text-xs text-secondary">Загрузите свою 3D модель (.glb, .gltf) для исследования.</p>
+                                <div id="anatomy-model-container">
+                                    <model-viewer 
+                                        id="anatomy-viewer"
+                                        src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" 
+                                        alt="Human Anatomy" 
+                                        auto-rotate camera-controls 
+                                        style="width: 100%; height: 300px; background: #f8fafc; border-radius: 12px;">
+                                    </model-viewer>
+                                </div>
+                            </div>
+                            
+                            <!-- 3D Life -->
+                            <div class="panel flex flex-col gap-4">
+                                <h3 class="font-bold">3D Жизнь</h3>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button class="btn-outline text-xs" onclick="window.labManager.loadLifeModel('space')">Космос</button>
+                                    <button class="btn-outline text-xs" onclick="window.labManager.loadLifeModel('heart')">Сердце</button>
+                                    <button class="btn-outline text-xs" onclick="window.labManager.loadLifeModel('body')">Тело Человека</button>
+                                    <button class="btn-outline text-xs" onclick="window.labManager.loadLifeModel('cell')">Клетка</button>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="btn-outline text-xs flex-1" onclick="window.labManager.explodeModel()">Разделить части</button>
+                                    <button class="btn-outline text-xs flex-1" onclick="window.labManager.showInternalView()">Внутренний вид</button>
+                                </div>
+                                <div id="life-model-container">
+                                    <model-viewer 
+                                        id="life-viewer"
+                                        src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" 
+                                        alt="3D Life" 
+                                        auto-rotate camera-controls 
+                                        style="width: 100%; height: 300px; background: #f8fafc; border-radius: 12px;">
+                                    </model-viewer>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shop View Removed -->
+
+                    <!-- Online Lessons View -->
+                    <div id="view-live" class="view hidden flex flex-col items-center justify-center h-full py-12">
+                        <div class="live-welcome-container flex flex-col items-center text-center w-full max-w-md">
+                            <div class="live-icon-box">
+                                <i data-lucide="video" class="w-8 h-8 text-teal-600"></i>
+                            </div>
+                            <h1 class="text-2xl font-bold mt-6" style="color: #0a1f44;" data-i18n="view_live_title">Онлайн Уроки</h1>
+                            <p class="text-secondary mt-2 mb-10" data-i18n="live_subtitle">Пожалуйста, введите название урока и пароль</p>
+                            
+                            <div class="live-card w-full">
+                                <div class="live-controls">
+                                    <div class="form-group mb-4">
+                                        <input type="text" id="lesson-name" placeholder="Название урока" class="live-input" data-i18n-placeholder="lesson_name_placeholder">
+                                    </div>
+                                    <div class="form-group mb-6">
+                                        <input type="password" id="lesson-pass" placeholder="Пароль" class="live-input" data-i18n-placeholder="lesson_pass_placeholder">
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row gap-3">
+                                        <button class="btn-live-join w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-3 rounded-xl transition-colors" onclick="joinLiveLesson()" data-i18n="join_lesson">Присоединиться</button>
+                                        <button class="btn-live-join w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition-colors" onclick="startLiveLesson()" data-i18n="start_lesson">Создать Урок</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Active Lesson Area -->
+                        <div id="active-lesson-area" class="hidden w-full h-full flex flex-col">
+                            <header class="p-4 flex justify-between items-center bg-gray-800 text-white rounded-t-xl">
+                                <h2 id="active-lesson-title" class="text-xl font-bold">Виртуальный класс</h2>
+                                <div class="flex gap-2">
+                                    <button id="vc-toggle-mic" class="p-3 bg-gray-700 rounded-full hover:bg-gray-600 transition-colors" onclick="window.toggleVideoMic()"><i data-lucide="mic"></i></button>
+                                    <button id="vc-toggle-cam" class="p-3 bg-gray-700 rounded-full hover:bg-gray-600 transition-colors" onclick="window.toggleVideoCam()"><i data-lucide="video"></i></button>
+                                    <button id="vc-leave" class="p-3 bg-red-600 rounded-full hover:bg-red-700 transition-colors" onclick="window.leaveLiveLesson()"><i data-lucide="phone-off"></i></button>
+                                </div>
+                            </header>
+                            <div class="flex-1 bg-gray-900 p-4 rounded-b-xl overflow-hidden flex flex-col">
+                                <div id="vc-video-grid" class="flex-1 grid gap-4 auto-rows-fr grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                                    <!-- Local Video -->
+                                    <div class="relative bg-gray-800 rounded-xl overflow-hidden shadow-lg aspect-video flex items-center justify-center border-2 border-teal-500">
+                                        <video id="local-video" autoplay muted playsinline class="w-full h-full object-cover transform scale-x-[-1]"></video>
+                                        <div class="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md backdrop-blur-sm">Вы</div>
+                                    </div>
+                                    <!-- Remote videos will be injected here by VideoChatManager -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat View -->
+                    <div id="view-chat" class="view hidden">
+                        <header class="view-header">
+                            <h1 data-i18n="view_chat_title">Мгновенный Чат</h1>
+                        </header>
+                        <div class="panel chat-panel flex flex-col h-[600px] p-0">
+                            <div id="instant-chat-history" class="flex-1 overflow-y-auto p-4 flex flex-col gap-2"></div>
+                            <div class="chat-input-wrapper p-4 border-t">
+                                <div class="flex gap-2 items-center">
+                                    <label class="btn-icon cursor-pointer hover:text-teal-600" style="color: var(--text-secondary);">
+                                        <i data-lucide="image"></i>
+                                        <input type="file" id="chat-image-upload" accept="image/*" class="hidden" onchange="sendChatImage(event)">
+                                    </label>
+                                    <input type="text" id="instant-chat-input" class="input-field flex-1" placeholder="Введите сообщение..." data-i18n-placeholder="chat_placeholder">
+                                    <button class="btn-primary" onclick="sendInstantMessage()"><i data-lucide="send"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Tutor View -->
+                    <div id="view-tutor" class="view hidden h-full p-0">
+                        <div class="flex h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                            <!-- Sidebar for History -->
+                            <div id="tutor-sidebar-desktop" class="w-64 border-r border-gray-100 bg-gray-50 flex flex-col h-full hidden md:flex transition-all duration-300">
+                                <div class="p-4 border-b border-gray-100">
+                                    <button onclick="tutorManager.newChat()" class="w-full btn-primary flex items-center justify-center gap-2 py-2 text-sm">
+                                        <i data-lucide="plus" class="w-4 h-4"></i>
+                                        <span data-i18n="new_chat">Новый чат</span>
+                                    </button>
+                                </div>
+                                <div id="tutor-history-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+                                    <!-- History items will be injected here -->
+                                </div>
+                                <div class="p-4 border-t border-gray-100 text-[10px] text-gray-400 text-center uppercase tracking-widest font-bold">
+                                    S.I.R.I.U.S. v2.0
+                                </div>
+                            </div>
+
+                            <!-- Main Chat Area -->
+                            <div class="flex-1 flex flex-col h-full bg-white">
+                                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 shadow-sm">
+                                            <i data-lucide="sparkles"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-gray-800">S.I.R.I.U.S.</h3>
+                                            <p class="text-[10px] text-secondary uppercase tracking-wider font-bold" data-i18n="ai_tutor_desc">Smart Interactive Resource</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2 items-center">
+                                        <!-- Mode Selector (Versions) -->
+                                        <div class="relative mr-2">
+                                            <select id="tutor-mode-selector" class="bg-gray-50 border border-gray-200 text-gray-700 text-xs rounded-lg focus:ring-purple-500 focus:border-purple-500 block w-full p-1.5 outline-none font-semibold transition-all hover:bg-white" onchange="tutorManager.changeMode(this.value)">
+                                                <option value="standard" selected data-i18n="tutor_mode_standard">Standard v2.0</option>
+                                                <option value="exam_prep" data-i18n="tutor_mode_exam">Exam Preparation</option>
+                                                <option value="weakness_analyzer" data-i18n="tutor_mode_weakness">Weakness Analyzer</option>
+                                                <option value="grade_counter" data-i18n="tutor_mode_grade_counter">Grade Counter</option>
+                                            </select>
+                                        </div>
+                                        <button class="md:hidden btn-icon" onclick="document.getElementById('tutor-sidebar-mobile').classList.toggle('hidden')">
+                                            <i data-lucide="history"></i>
+                                        </button>
+                                        <button class="btn-icon" onclick="tutorManager.newChat()" title="New Chat">
+                                            <i data-lucide="plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="tutor-chat-history" class="flex-1 overflow-y-auto p-6 flex flex-col gap-6 bg-white relative">
+                                    <!-- History Toggle for Desktop (Gemini style) -->
+                                    <button class="absolute top-4 left-4 z-10 p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors hidden md:block" onclick="tutorManager.toggleSidebar()" title="Toggle History">
+                                        <i data-lucide="history" class="w-5 h-5"></i>
+                                    </button>
+                                    <!-- Messages -->
+                                </div>
+
+                                <div class="p-4 bg-white border-t border-gray-100">
+                                    <div class="max-w-3xl mx-auto relative">
+                                        <input type="text" id="tutor-input" class="w-full p-4 pr-24 rounded-2xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all shadow-sm text-sm" data-i18n-placeholder="ask_ai_placeholder" placeholder="Спросите о чем угодно...">
+                                        <div class="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                                            <button id="tutor-voice-btn" onclick="tutorManager.toggleVoiceMode()" class="btn-icon text-gray-400 hover:text-primary">
+                                                <i data-lucide="mic"></i>
+                                            </button>
+                                            <button id="tutor-send-btn" onclick="tutorManager.sendTutorMessage()" class="btn-icon bg-primary text-black hover:bg-primary/90 shadow-md">
+                                                <i data-lucide="send"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p class="text-[9px] text-center text-gray-400 mt-2 uppercase font-bold tracking-tighter">AI может ошибаться. Проверяйте важную информацию.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Sidebar Overlay -->
+                        <div id="tutor-sidebar-mobile" class="fixed inset-0 z-50 bg-black/50 hidden md:hidden" onclick="this.classList.add('hidden')">
+                            <div class="w-64 h-full bg-white flex flex-col shadow-2xl" onclick="event.stopPropagation()">
+                                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                                    <h3 class="font-bold">История</h3>
+                                    <button onclick="document.getElementById('tutor-sidebar-mobile').classList.add('hidden')" class="btn-icon"><i data-lucide="x"></i></button>
+                                </div>
+                                <div id="tutor-history-list-mobile" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Habit Tracker View -->
+                    <div id="view-habits" class="view hidden">
+                        <header class="view-header flex justify-between items-center">
+                            <h1 data-i18n="view_habits_title">Habit Tracker</h1>
+                            <div class="flex gap-2">
+                                <button class="btn-ghost text-red-500 hover:bg-red-50" onclick="window.habitManager.clearAll()">
+                                    <i data-lucide="trash-2"></i> <span data-i18n="clear_all_habits">Clear All</span>
+                                </button>
+                                <button class="btn-primary" onclick="window.habitManager.openAddModal()">
+                                    <i data-lucide="plus"></i> <span data-i18n="add_habit">Add Habit</span>
+                                </button>
+                            </div>
+                        </header>
+                        
+                        <div class="panel mb-6">
+                            <div class="flex flex-col md:flex-row gap-6 items-center">
+                                <div class="flex-1 w-full">
+                                    <h3 class="text-sm font-bold mb-2 opacity-70 uppercase tracking-wider">Monthly Progress</h3>
+                                    <div class="h-4 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                                        <div id="habit-total-progress-bar" class="h-full bg-teal-500 transition-all duration-500" style="width: 0%"></div>
+                                    </div>
+                                    <div class="flex justify-between mt-1 text-xs font-bold text-secondary">
+                                        <span id="habit-total-progress-text">0% Completed</span>
+                                        <span id="habit-total-stats">0/0 Habits Today</span>
+                                    </div>
+                                </div>
+                                <div class="flex gap-4">
+                                    <div class="text-center px-4 py-2 bg-orange-50 rounded-xl border border-orange-100">
+                                        <div id="habit-streak-count" class="text-2xl font-bold text-orange-600">0</div>
+                                        <div class="text-[10px] uppercase font-bold text-orange-400">Day Streak</div>
+                                    </div>
+                                    <div class="text-center px-4 py-2 bg-blue-50 rounded-xl border border-blue-100">
+                                        <div id="habit-best-streak" class="text-2xl font-bold text-blue-600">0</div>
+                                        <div class="text-[10px] uppercase font-bold text-blue-400">Best Streak</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel p-0 overflow-hidden border-none shadow-none bg-transparent">
+                            <div class="habit-notion-table-container overflow-x-auto">
+                                <table class="habit-notion-table w-full">
+                                    <thead>
+                                        <tr id="habit-table-header">
+                                            <th class="habit-col-name">Habit</th>
+                                            <!-- Days will be injected here -->
+                                        </tr>
+                                    </thead>
+                                    <tbody id="habit-table-body">
+                                        <!-- Habits will be injected here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="panel mt-6">
+                            <div class="flex-1 w-full">
+                                <div class="h-4 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                                    <div id="habit-total-progress-bar-bottom" class="h-full bg-teal-500 transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                                <div class="flex justify-center mt-1 text-xs font-bold text-secondary">
+                                    <span id="habit-total-progress-text-bottom">0% Completed</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings View -->
+                    <div id="view-settings" class="view hidden">
+                        <header class="view-header">
+                            <h1 data-i18n="nav_settings">Настройки</h1>
+                        </header>
+                        <div class="panel max-w-md">
+                            <div class="form-group mb-4">
+                                <label data-i18n="settings_language">Язык</label>
+                                <select id="settings-language" class="select-input w-full">
+                                    <option value="en">English</option>
+                                    <option value="ru">Русский</option>
+                                    <option value="tj">Тоҷикӣ</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-4">
+                                <label data-i18n="settings_theme">Тема Оформления</label>
+                                <select id="settings-theme" class="select-input w-full">
+                                    <option value="light">EduNote Светлая (По умолчанию)</option>
+                                    <option value="dark">Классическая Темная</option>
+                                    <option value="ocean">Морской Бриз</option>
+                                    <option value="forest">Лесная Мята</option>
+                                    <option value="sunset">Оранжевый Закат</option>
+                                    <option value="lavender">Лавандовая Мечта</option>
+                                    <option value="ruby">Рубиновый Красный</option>
+                                    <option value="emerald">Изумрудный Зеленый</option>
+                                    <option value="amber">Янтарное Золото</option>
+                                    <option value="monochrome">Монохром</option>
+                                    <option value="cyberpunk">Киберпанк</option>
+                                </select>
+                            </div>
+
+                            <!-- Voice Assistant Settings -->
+                            <div class="form-group mb-4 p-4 rounded-lg border" style="background: var(--bg-main); border-color: var(--surface-border);">
+                                <h3 class="font-bold mb-2 flex items-center gap-2">
+                                    <i data-lucide="mic" class="w-4 h-4 text-red-500"></i>
+                                    <span data-i18n="voice_settings_title">Voice Assistant 'Geek'</span>
+                                </h3>
+                                <p class="text-xs mb-4" style="color: var(--text-secondary);" data-i18n="voice_activation_word">Activation Word: 'Geek'</p>
+                                
+                                <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);" data-i18n="voice_select_label">Voice Persona</label>
+                                <select id="voice-persona" class="select-input w-full mb-3" onchange="window.voiceAssistant.updateSettings({voiceId: this.value})">
+                                    <option value="pNInz6obpgDQGcFmaJgB" data-i18n="voice_male">Male (Timur)</option>
+                                    <option value="EXAVITQu4vr4xnSDxMaL" data-i18n="voice_female">Female (Zarina)</option>
+                                </select>
+
+                                <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);" data-i18n="voice_lang_label">Recognition Language</label>
+                                <select id="voice-lang" class="select-input w-full" onchange="window.voiceAssistant.updateSettings({lang: this.value})">
+                                    <option value="ru-RU">Русский</option>
+                                    <option value="en-US">English</option>
+                                    <option value="tg-TJ">Тоҷикӣ</option>
+                                </select>
+                            </div>
+                            <div class="mt-8 pt-4 border-t">
+                                <button id="logout-btn" class="btn-ghost w-full justify-start text-red-500"><i data-lucide="log-out"></i> <span data-i18n="logout">Logout</span></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Admin Panel View -->
+                    <div id="view-admin" class="view hidden">
+                        <header class="view-header">
+                            <h1 data-i18n="view_admin_title">Панель Администратора</h1>
+                        </header>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                            <button id="admin-tab-btn-users" class="admin-tab-btn active group relative overflow-hidden flex flex-col items-center justify-center p-8 rounded-3xl transition-all duration-300 border border-blue-100 shadow-sm hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-blue-50/30" onclick="window.adminManager.switchTab('users')">
+                                <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-600 flex items-center justify-center mb-5 icon-container transition-transform duration-300 shadow-sm border border-blue-200 group-hover:scale-110 group-hover:rotate-3">
+                                    <i data-lucide="users" class="w-10 h-10"></i>
+                                </div>
+                                <span class="font-bold text-2xl text-gray-800 tracking-wide mb-2" data-i18n="admin_tab_users">Пользователи</span>
+                                <p class="text-sm text-gray-500 text-center px-4">Управление аккаунтами, ролями и доступами</p>
+                            </button>
+                            
+                            <button id="admin-tab-btn-timetable" class="admin-tab-btn group relative overflow-hidden flex flex-col items-center justify-center p-8 rounded-3xl transition-all duration-300 border border-purple-100 shadow-sm hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-purple-50/30" onclick="window.adminManager.switchTab('timetable')">
+                                <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 text-purple-600 flex items-center justify-center mb-5 icon-container transition-transform duration-300 shadow-sm border border-purple-200 group-hover:scale-110 group-hover:-rotate-3">
+                                    <i data-lucide="calendar" class="w-10 h-10"></i>
+                                </div>
+                                <span class="font-bold text-2xl text-gray-800 tracking-wide mb-2" data-i18n="admin_tab_timetable">Расписание</span>
+                                <p class="text-sm text-gray-500 text-center px-4">Настройка уроков, классов и кабинетов</p>
+                            </button>
+
+                            <button id="admin-tab-btn-subjects" class="admin-tab-btn group relative overflow-hidden flex flex-col items-center justify-center p-8 rounded-3xl transition-all duration-300 border border-emerald-100 shadow-sm hover:shadow-xl hover:-translate-y-1 bg-gradient-to-br from-white to-emerald-50/30" onclick="window.adminManager.switchTab('subjects')">
+                                <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-600 flex items-center justify-center mb-5 icon-container transition-transform duration-300 shadow-sm border border-emerald-200 group-hover:scale-110 group-hover:rotate-3">
+                                    <i data-lucide="book-open" class="w-10 h-10"></i>
+                                </div>
+                                <span class="font-bold text-2xl text-gray-800 tracking-wide mb-2" data-i18n="admin_tab_subjects">Предметы</span>
+                                <p class="text-sm text-gray-500 text-center px-4">Справочник учебных дисциплин и курсов</p>
+                            </button>
+                        </div>
+
+                        <div id="admin-tab-users" class="panel">
+                            <div class="bg-gradient-to-br from-blue-50 to-indigo-50/30 rounded-3xl shadow-sm border border-blue-100 p-8 mb-10 relative overflow-hidden">
+                                <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100/50 to-indigo-100/50 rounded-full blur-3xl -mr-20 -mt-20 z-0"></div>
+                                <div class="relative z-10">
+                                    <div class="flex items-center gap-4 mb-8">
+                                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-600 flex items-center justify-center shadow-sm border border-blue-200">
+                                            <i data-lucide="user-plus" class="w-7 h-7"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-2xl font-bold text-gray-800 m-0" data-i18n="create_account">Создать Аккаунт</h3>
+                                            <p class="text-sm text-gray-500 mt-1">Добавление нового пользователя в систему</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+                                        <div class="md:col-span-3">
+                                            <label class="block text-sm font-bold text-blue-800 mb-2" data-i18n="role_header">Роль</label>
+                                            <select id="admin-create-role" class="select-input w-full bg-white border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl py-3 shadow-sm">
+                                                <option value="Student" data-i18n="role_student">Ученик</option>
+                                                <option value="Teacher" data-i18n="role_teacher">Учитель</option>
+                                                <option value="Parent" data-i18n="role_parent">Родитель</option>
+                                                <option value="Admin" data-i18n="role_admin">Админ</option>
+                                            </select>
+                                        </div>
+                                        <div class="md:col-span-4">
+                                            <label class="block text-sm font-bold text-blue-800 mb-2" data-i18n="name_placeholder">ФИО</label>
+                                            <input type="text" id="admin-create-name" class="input-field w-full bg-white border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl py-3 shadow-sm" placeholder="Введите полное имя" data-i18n-placeholder="name_placeholder">
+                                        </div>
+                                        <div class="md:col-span-3">
+                                            <label class="block text-sm font-bold text-blue-800 mb-2" data-i18n="class_placeholder">Класс</label>
+                                            <select id="admin-create-class" class="select-input w-full bg-white border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl py-3 shadow-sm">
+                                                <option value="" data-i18n="class_none_admin">Нет (Для Админа)</option>
+                                                <optgroup label="Начальная" data-i18n-label="primary_school">
+                                                    <option value="1-A">1-A</option><option value="1-B">1-B</option>
+                                                    <option value="2-A">2-A</option><option value="2-B">2-B</option>
+                                                    <option value="3-A">3-A</option><option value="3-B">3-B</option>
+                                                    <option value="4-A">4-A</option><option value="4-B">4-B</option>
+                                                </optgroup>
+                                                <optgroup label="Средняя" data-i18n-label="middle_school">
+                                                    <option value="5-A">5-A</option><option value="5-B">5-B</option>
+                                                    <option value="6-A">6-A</option><option value="6-B">6-B</option>
+                                                    <option value="7-A">7-A</option><option value="7-B">7-B</option>
+                                                    <option value="8-A">8-A</option><option value="8-B">8-B</option>
+                                                </optgroup>
+                                                <optgroup label="Старшая" data-i18n-label="high_school">
+                                                    <option value="9-B">9-B</option><option value="9-C">9-C</option>
+                                                    <option value="10-B">10-B</option><option value="10-C">10-C</option>
+                                                    <option value="11-B">11-B</option><option value="11-C">11-C</option>
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <button class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5" onclick="window.adminManager.createAccount()">
+                                                <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                                                <span data-i18n="create_btn">Создать</span>
+                                            </button>
+                                        </div>
+                                        <div id="admin-teacher-subjects" class="hidden md:col-span-12 mt-4 bg-white/60 backdrop-blur-sm p-6 rounded-2xl border border-indigo-100 shadow-sm">
+                                            <p class="text-base font-bold mb-4 text-indigo-800 flex items-center gap-2" data-i18n="admin_subjects_label">
+                                                <i data-lucide="book-open" class="w-5 h-5 text-indigo-500"></i>
+                                                Выберите предметы для учителя:
+                                            </p>
+                                            <div id="admin-subjects-list" class="grid grid-cols-2 md:grid-cols-4 gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                                                <!-- Subjects will be populated here -->
+                                            </div>
+                                        </div>
+                                        <div id="admin-parent-student" class="hidden md:col-span-12 mt-4 bg-white/60 backdrop-blur-sm p-6 rounded-2xl border border-purple-100 shadow-sm">
+                                            <label class="block text-base font-bold mb-4 text-purple-800 flex items-center gap-2" data-i18n="select_student_label">
+                                                <i data-lucide="users" class="w-5 h-5 text-purple-500"></i>
+                                                Выберите ученика (для родителя):
+                                            </label>
+                                            <select id="admin-create-student" class="select-input w-full bg-white border-purple-200 focus:border-purple-500 focus:ring-purple-500/20 rounded-xl py-3 shadow-sm">
+                                                <!-- Students will be populated here -->
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="admin-create-result" class="mt-6 p-5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl hidden shadow-sm flex items-start gap-4">
+                                        <div class="mt-1 bg-emerald-100 p-2 rounded-full text-emerald-600">
+                                            <i data-lucide="check-circle" class="w-6 h-6"></i>
+                                        </div>
+                                        <div class="flex-1 text-base leading-relaxed"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-2 mb-4 mt-8">
+                                <i data-lucide="users" class="w-5 h-5 text-donishup-blue"></i>
+                                <h3 class="text-lg font-bold text-gray-800 m-0" data-i18n="user_list">Список Пользователей</h3>
+                            </div>
+                            
+                            <!-- Filter Bar -->
+                            <div class="bg-gradient-to-br from-blue-50 to-indigo-50/50 rounded-3xl border border-blue-100 p-8 mb-10 shadow-sm relative overflow-hidden">
+                                <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100/50 to-indigo-100/50 rounded-full blur-3xl -mr-20 -mt-20 z-0"></div>
+                                <div class="relative z-10">
+                                    <div class="flex items-center gap-4 mb-8">
+                                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-600 flex items-center justify-center shadow-sm border border-blue-200">
+                                            <i data-lucide="filter" class="w-7 h-7"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-2xl font-bold text-gray-800 m-0">Фильтры и поиск</h3>
+                                            <p class="text-sm text-gray-500 mt-1">Быстрый поиск пользователей по параметрам</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                        <div>
+                                            <label class="block text-sm font-bold text-blue-800 mb-2" data-i18n="filter_name">Фильтр по имени</label>
+                                            <input type="text" id="admin-filter-name" class="text-input w-full bg-white border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl py-3 shadow-sm" oninput="window.adminManager.loadAdminRoster()" placeholder="Введите имя...">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-bold text-blue-800 mb-2" data-i18n="filter_role">Роль</label>
+                                            <select id="admin-filter-role" class="select-input w-full bg-white border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl py-3 shadow-sm" onchange="window.adminManager.loadAdminRoster()">
+                                                <option value="" data-i18n="all">Все роли</option>
+                                                <option value="Admin" data-i18n="role_admin">Админ</option>
+                                                <option value="Teacher" data-i18n="role_teacher">Учитель</option>
+                                                <option value="Student" data-i18n="role_student">Ученик</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-bold text-blue-800 mb-2" data-i18n="filter_class">Класс</label>
+                                            <input type="text" id="admin-filter-class" class="text-input w-full bg-white border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl py-3 shadow-sm" oninput="window.adminManager.loadAdminRoster()" placeholder="Например: 10-A">
+                                        </div>
+                                        <div class="flex items-end">
+                                            <button class="w-full py-3 px-4 bg-white hover:bg-blue-50 text-blue-600 font-bold rounded-xl border border-blue-200 shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5" onclick="window.adminManager.resetFilters()">
+                                                <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                                                <span data-i18n="reset_filters">Сбросить фильтры</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="data-table w-full">
+                                        <thead class="bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-800 border-b-2 border-blue-100">
+                                        <tr>
+                                            <th class="py-5 px-6 font-bold uppercase tracking-wider cursor-pointer hover:bg-blue-100/50 transition-colors" onclick="window.adminManager.setSort('name')">
+                                                <div class="flex items-center gap-2">
+                                                    <span data-i18n="name_placeholder">Имя</span>
+                                                    <i data-lucide="chevrons-up-down" class="w-4 h-4 text-blue-400"></i>
+                                                </div>
+                                            </th>
+                                            <th class="py-5 px-6 font-bold uppercase tracking-wider cursor-pointer hover:bg-blue-100/50 transition-colors" onclick="window.adminManager.setSort('role')">
+                                                <div class="flex items-center gap-2">
+                                                    <span data-i18n="role_header">Роль</span>
+                                                    <i data-lucide="chevrons-up-down" class="w-4 h-4 text-blue-400"></i>
+                                                </div>
+                                            </th>
+                                            <th class="py-5 px-6 font-bold uppercase tracking-wider cursor-pointer hover:bg-blue-100/50 transition-colors" onclick="window.adminManager.setSort('class_id')">
+                                                <div class="flex items-center gap-2">
+                                                    <span data-i18n="class_placeholder">Класс</span>
+                                                    <i data-lucide="chevrons-up-down" class="w-4 h-4 text-blue-400"></i>
+                                                </div>
+                                            </th>
+                                            <th class="py-5 px-6 font-bold uppercase tracking-wider" data-i18n="subject_header">Предмет</th>
+                                            <th class="py-5 px-6 font-bold uppercase tracking-wider" data-i18n="login_header">Логин</th>
+                                            <th class="py-5 px-6 font-bold uppercase tracking-wider" data-i18n="password_header">Пароль</th>
+                                            <th class="py-5 px-6 font-bold uppercase tracking-wider text-right" data-i18n="actions_header">Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-roster-body" class="divide-y-2 divide-gray-50"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        </div>
+
+                        <div id="admin-tab-timetable" class="panel hidden">
+                            <div class="bg-gradient-to-br from-indigo-50 to-purple-50/50 p-8 rounded-2xl shadow-sm border border-indigo-100 mb-10 relative overflow-hidden">
+                                <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-100/50 to-purple-100/50 rounded-full blur-3xl -mr-20 -mt-20 z-0"></div>
+                                <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-200">
+                                            <i data-lucide="calendar" class="w-7 h-7"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-2xl font-bold text-gray-800 m-0" data-i18n="admin_timetable_title">Редактор расписания</h3>
+                                            <p class="text-sm text-gray-500 mt-1">Управление расписанием занятий для классов</p>
+                                        </div>
+                                    </div>
+                                    <div class="w-full md:w-72 bg-white/60 p-4 rounded-xl border border-indigo-100 shadow-sm backdrop-blur-sm">
+                                        <label class="block text-xs font-bold uppercase tracking-wider text-indigo-800 mb-2">Выберите класс</label>
+                                        <select id="admin-timetable-class" class="select-input w-full bg-white border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500/20 rounded-lg py-2.5 shadow-sm" onchange="window.adminManager.loadTimetable()">
+                                            <option value="">Выберите класс...</option>
+                                            <optgroup label="Начальная">
+                                                <option value="1-A">1-A</option><option value="1-B">1-B</option>
+                                                <option value="2-A">2-A</option><option value="2-B">2-B</option>
+                                                <option value="3-A">3-A</option><option value="3-B">3-B</option>
+                                                <option value="4-A">4-A</option><option value="4-B">4-B</option>
+                                            </optgroup>
+                                            <optgroup label="Средняя">
+                                                <option value="5-A">5-A</option><option value="5-B">5-B</option>
+                                                <option value="6-A">6-A</option><option value="6-B">6-B</option>
+                                                <option value="7-A">7-A</option><option value="7-B">7-B</option>
+                                                <option value="8-A">8-A</option><option value="8-B">8-B</option>
+                                            </optgroup>
+                                            <optgroup label="Старшая">
+                                                <option value="9-B">9-B</option><option value="9-C">9-C</option>
+                                                <option value="10-B">10-B</option><option value="10-C">10-C</option>
+                                                <option value="11-B">11-B</option><option value="11-C">11-C</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                                <div id="admin-timetable-grid" class="overflow-x-auto">
+                                    <!-- Grid will be rendered here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="admin-tab-subjects" class="panel hidden">
+                            <div class="bg-gradient-to-br from-emerald-50 to-teal-50/50 p-8 rounded-2xl shadow-sm border border-emerald-100 mb-10 relative overflow-hidden">
+                                <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-emerald-100/50 to-teal-100/50 rounded-full blur-3xl -mr-20 -mt-20 z-0"></div>
+                                <div class="relative z-10">
+                                    <div class="flex items-center gap-3 mb-8">
+                                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200">
+                                            <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-xl font-bold text-gray-800 m-0" data-i18n="admin_subjects_title">Добавить новый предмет</h3>
+                                            <p class="text-sm text-gray-500 mt-1">Создание новой учебной дисциплины</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+                                        <div class="md:col-span-4">
+                                            <label class="block text-sm font-bold text-emerald-800 mb-2">ID предмета</label>
+                                            <input type="text" id="admin-subject-type" class="input-field w-full bg-white border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500/20 rounded-xl py-3 shadow-sm" placeholder="например: english_lit" required>
+                                        </div>
+                                        <div class="md:col-span-5">
+                                            <label class="block text-sm font-bold text-emerald-800 mb-2">Название предмета</label>
+                                            <input type="text" id="admin-subject-name" class="input-field w-full bg-white border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500/20 rounded-xl py-3 shadow-sm" placeholder="например: English Lit" required>
+                                        </div>
+                                        <div class="md:col-span-3">
+                                            <button class="w-full py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5" onclick="window.adminManager.saveSubject()">
+                                                <i data-lucide="save" class="w-5 h-5"></i>
+                                                Сохранить
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-2 mb-4 mt-8">
+                                <i data-lucide="list" class="w-5 h-5 text-emerald-600"></i>
+                                <h3 class="text-lg font-bold text-gray-800 m-0" data-i18n="admin_subjects_list">Список предметов</h3>
+                            </div>
+                            
+                            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-800 text-sm border-b-2 border-emerald-100">
+                                                <th class="py-5 px-8 font-bold uppercase tracking-wider">ID</th>
+                                                <th class="py-5 px-8 font-bold uppercase tracking-wider">Название</th>
+                                                <th class="py-5 px-8 font-bold uppercase tracking-wider text-right">Действия</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="admin-subjects-body" class="divide-y-2 divide-gray-50"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Timetable Modal -->
+    <div id="admin-timetable-modal" class="fullscreen-modal hidden fixed inset-0 flex items-center justify-center z-[200] bg-black/60 backdrop-blur-sm">
+        <div class="panel bg-white rounded-2xl shadow-2xl p-6 w-full max-w-[500px]">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="admin-timetable-modal-title" class="text-xl font-bold text-gray-900">Добавить урок</h3>
+                <button class="text-gray-400 hover:text-gray-600" onclick="document.getElementById('admin-timetable-modal').classList.add('hidden')">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <form id="admin-timetable-form" onsubmit="window.adminManager.saveTimetableEntry(event)">
+                <input type="hidden" id="admin-timetable-day">
+                <input type="hidden" id="admin-timetable-lesson">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="subject_label">Предмет</label>
+                        <select id="admin-timetable-subject" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required onchange="window.adminManager.filterTeachersForTimetable()">
+                            <option value="">Выберите предмет</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="teacher_label">Учитель</label>
+                        <select id="admin-timetable-teacher" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                            <option value="">Выберите учителя</option>
+                        </select>
+                        <p id="admin-timetable-conflict-msg" class="text-red-500 text-xs mt-1 hidden font-medium">Этот учитель уже занят в это время.</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-8">
+                    <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium" onclick="document.getElementById('admin-timetable-modal').classList.add('hidden')" data-i18n="cancel_btn">Отмена</button>
+                    <button type="button" id="admin-timetable-delete-btn" class="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium hidden" onclick="window.adminManager.deleteTimetableEntry()">Удалить</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium" data-i18n="save_btn">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Materials Modal -->
+    <div id="materials-modal" class="fullscreen-modal hidden fixed inset-0 flex items-center justify-center z-[200] bg-black/60 backdrop-blur-sm">
+        <div class="panel bg-white rounded-2xl shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900 m-0" id="materials-modal-title">Materials</h3>
+                <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="document.getElementById('materials-modal').classList.add('hidden')">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto pr-2 space-y-6" id="materials-list">
+                <!-- Materials will be loaded here -->
+                <div class="flex justify-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>
+            </div>
+
+            <!-- Upload Section (Teachers/Admins only) -->
+            <div id="materials-upload-section" class="mt-6 pt-6 border-t border-gray-200 hidden">
+                <h4 class="font-bold text-gray-800 mb-4">Upload New Material</h4>
+                <form id="materials-upload-form" onsubmit="window.uploadMaterial(event)" class="space-y-4">
+                    <input type="hidden" id="mat-class-id">
+                    <input type="hidden" id="mat-subject">
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input type="text" id="mat-title" required class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Content / Notes (Optional)</label>
+                        <textarea id="mat-content" rows="3" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">File (PPTX, PDF, Word, Image)</label>
+                        <input type="file" id="mat-file" accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg">
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium flex items-center gap-2">
+                            <i data-lucide="upload" class="w-4 h-4"></i> Upload Material
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dictionary Popup -->
+    <div id="dictionary-popup" class="hidden absolute z-[300] bg-white rounded-lg shadow-xl border border-gray-200 p-4 max-w-xs transform -translate-x-1/2 -translate-y-full mt-[-10px] pointer-events-none transition-opacity duration-200">
+        <div class="font-bold text-indigo-700 mb-1" id="dict-word">Word</div>
+        <div class="text-sm text-gray-700" id="dict-def">Loading definition...</div>
+        <div class="absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-3 h-3 bg-white border-b border-r border-gray-200 rotate-45"></div>
+    </div>
+
+    <!-- Homework Modal -->
+    <div id="add-homework-modal" class="fullscreen-modal hidden fixed inset-0 flex items-center justify-center z-[200] bg-black/60 backdrop-blur-sm">
+        <div class="panel bg-white rounded-2xl shadow-2xl p-6 w-full max-w-[500px]">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900 m-0" data-i18n="add_homework_title">Добавить Домашнее Задание</h3>
+                <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="document.getElementById('add-homework-modal').classList.add('hidden')">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div id="hw-class-container">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="class_placeholder">Класс</label>
+                    <select id="hw-class" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <optgroup label="Начальная" data-i18n-label="primary_school">
+                            <option value="1-A">1-A</option><option value="1-B">1-B</option>
+                            <option value="2-A">2-A</option><option value="2-B">2-B</option>
+                            <option value="3-A">3-A</option><option value="3-B">3-B</option>
+                            <option value="4-A">4-A</option><option value="4-B">4-B</option>
+                        </optgroup>
+                        <optgroup label="Средняя" data-i18n-label="middle_school">
+                            <option value="5-A">5-A</option><option value="5-B">5-B</option>
+                            <option value="6-A">6-A</option><option value="6-B">6-B</option>
+                            <option value="7-A">7-A</option><option value="7-B">7-B</option>
+                            <option value="8-A">8-A</option><option value="8-B">8-B</option>
+                        </optgroup>
+                        <optgroup label="Старшая" data-i18n-label="high_school">
+                            <option value="9-B">9-B</option><option value="9-C">9-C</option>
+                            <option value="10-B">10-B</option><option value="10-C">10-C</option>
+                            <option value="11-B">11-B</option><option value="11-C">11-C</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="subject_label">Предмет</label>
+                    <select id="hw-subject" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="tajik" data-i18n="subj_tajik">Tajik Language</option>
+                        <option value="russian" data-i18n="subj_russian">Russian Language</option>
+                        <option value="english" data-i18n="subj_english">English Language</option>
+                        <option value="math" data-i18n="subj_math">Mathematics</option>
+                        <option value="physics" data-i18n="subj_physics">Physics</option>
+                        <option value="chemistry" data-i18n="subj_chemistry">Chemistry</option>
+                        <option value="biology" data-i18n="subj_biology">Biology</option>
+                        <option value="geography" data-i18n="subj_geography">Geography</option>
+                        <option value="history_tj" data-i18n="subj_history_tj">History of Tajikistan</option>
+                        <option value="history_world" data-i18n="subj_history_world">World History</option>
+                        <option value="social_studies" data-i18n="subj_social_studies">Social Studies</option>
+                        <option value="informatics" data-i18n="subj_informatics">Computer Science</option>
+                        <option value="labor" data-i18n="subj_labor">Labor Training</option>
+                        <option value="pe" data-i18n="subj_pe">Physical Education</option>
+                        <option value="art_music" data-i18n="subj_art_music">Art and Music</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="description_label">Описание</label>
+                    <textarea id="hw-desc" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-y" rows="4"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="due_date_label">Срок сдачи</label>
+                    <input type="date" id="hw-date" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-gray-100">
+                    <button class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors" onclick="document.getElementById('add-homework-modal').classList.add('hidden')" data-i18n="cancel">Отмена</button>
+                    <button class="px-6 py-2 bg-donishup-blue text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm transition-colors" onclick="submitHomework()" data-i18n="save">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Grade Modal -->
+    <div id="add-grade-modal" class="fullscreen-modal hidden fixed inset-0 flex items-center justify-center z-[200] bg-black/60 backdrop-blur-sm">
+        <div class="panel bg-white rounded-3xl shadow-2xl p-10 w-full max-w-[700px] min-h-[500px] flex flex-col justify-center">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-3xl font-bold text-gray-900 m-0" data-i18n="add_grade_title">Поставить Оценку</h3>
+                <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="document.getElementById('add-grade-modal').classList.add('hidden')">
+                    <i data-lucide="x" class="w-8 h-8"></i>
+                </button>
+            </div>
+            <div class="space-y-8 flex-1">
+                <div>
+                    <label class="block text-xl font-medium text-gray-800 mb-3" data-i18n="student_label">Ученик</label>
+                    <select id="grade-student" class="w-full p-4 text-xl bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></select>
+                </div>
+                <div>
+                    <label class="block text-xl font-medium text-gray-800 mb-3" data-i18n="subject_label">Предмет</label>
+                    <select id="grade-subject" class="w-full p-4 text-xl bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="tajik" data-i18n="subj_tajik">Tajik Language</option>
+                        <option value="russian" data-i18n="subj_russian">Russian Language</option>
+                        <option value="english" data-i18n="subj_english">English Language</option>
+                        <option value="math" data-i18n="subj_math">Mathematics</option>
+                        <option value="physics" data-i18n="subj_physics">Physics</option>
+                        <option value="chemistry" data-i18n="subj_chemistry">Chemistry</option>
+                        <option value="biology" data-i18n="subj_biology">Biology</option>
+                        <option value="geography" data-i18n="subj_geography">Geography</option>
+                        <option value="history_tj" data-i18n="subj_history_tj">History of Tajikistan</option>
+                        <option value="history_world" data-i18n="subj_history_world">World History</option>
+                        <option value="social_studies" data-i18n="subj_social_studies">Social Studies</option>
+                        <option value="informatics" data-i18n="subj_informatics">Computer Science</option>
+                        <option value="labor" data-i18n="subj_labor">Labor Training</option>
+                        <option value="pe" data-i18n="subj_pe">Physical Education</option>
+                        <option value="art_music" data-i18n="subj_art_music">Art and Music</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xl font-medium text-gray-800 mb-3" data-i18n="grade_label">Оценка</label>
+                    <select id="grade-value" class="w-full p-4 text-xl bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-6 mt-12 pt-6 border-t border-gray-100">
+                    <button class="px-6 py-3 text-xl text-gray-600 hover:text-gray-800 font-medium transition-colors" onclick="document.getElementById('add-grade-modal').classList.add('hidden')" data-i18n="cancel">Отмена</button>
+                    <button class="px-10 py-3 text-xl bg-donishup-blue text-white rounded-xl hover:bg-blue-700 font-medium shadow-sm transition-colors" onclick="submitGrade()" data-i18n="save">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Modals -->
+    <div id="admin-password-modal" class="fullscreen-modal hidden fixed inset-0 flex items-center justify-center z-[200] bg-black/60 backdrop-blur-sm">
+        <div class="panel bg-white rounded-2xl shadow-2xl p-6 w-full max-w-[400px]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900 m-0" data-i18n="admin_verify_title">Требуется подтверждение админа</h3>
+                <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="document.getElementById('admin-password-modal').classList.add('hidden')">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <p class="text-sm text-gray-500 mb-6" data-i18n="admin_verify_text">Пожалуйста, введите пароль администратора, чтобы увидеть пароль пользователя.</p>
+            <div class="space-y-4">
+                <input type="password" id="admin-verify-pass" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Пароль Админа" data-i18n-placeholder="admin_verify_placeholder">
+                <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-gray-100">
+                    <button class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors" onclick="document.getElementById('admin-password-modal').classList.add('hidden')" data-i18n="cancel">Отмена</button>
+                    <button class="px-6 py-2 bg-donishup-blue text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm transition-colors" onclick="window.adminManager.verifyAndReveal()" data-i18n="confirm">Подтвердить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-delete-modal" class="fullscreen-modal hidden fixed inset-0 flex items-center justify-center z-[200] bg-black/60 backdrop-blur-sm">
+        <div class="panel bg-white rounded-2xl shadow-2xl p-6 w-full max-w-[400px]">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                        <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 m-0" data-i18n="delete_confirm_title">Подтвердите удаление</h3>
+                </div>
+                <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="document.getElementById('confirm-delete-modal').classList.add('hidden')">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <p class="text-sm text-gray-500 mb-6 pl-13" data-i18n="delete_confirm_text">Вы уверены, что хотите удалить этого пользователя? Это действие нельзя отменить.</p>
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                <button class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors" onclick="document.getElementById('confirm-delete-modal').classList.add('hidden')" data-i18n="cancel">Отмена</button>
+                <button class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium shadow-sm transition-colors" onclick="window.adminManager.confirmDelete()" data-i18n="delete_btn">Удалить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-edit-modal" class="fullscreen-modal hidden fixed inset-0 flex items-center justify-center z-[200] bg-black/60 backdrop-blur-sm">
+        <div class="panel bg-white rounded-2xl shadow-2xl p-6 w-full max-w-[500px] max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900 m-0" data-i18n="edit_user_title">Редактировать пользователя</h3>
+                <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="document.getElementById('admin-edit-modal').classList.add('hidden')">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="name_placeholder">Имя</label>
+                    <input type="text" id="admin-edit-name" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="role_header">Роль</label>
+                    <select id="admin-edit-role" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" onchange="window.adminManager.handleEditRoleChange()">
+                        <option value="Student" data-i18n="role_student">Ученик</option>
+                        <option value="Teacher" data-i18n="role_teacher">Учитель</option>
+                        <option value="Parent" data-i18n="role_parent">Родитель</option>
+                        <option value="Admin" data-i18n="role_admin">Админ</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="class_placeholder">Класс</label>
+                    <input type="text" id="admin-edit-class" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div id="admin-edit-subjects-container" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="admin_subjects_label">Выберите предметы:</label>
+                    <div id="admin-edit-subjects-list" class="grid grid-cols-2 gap-2 border border-gray-200 p-3 rounded-lg bg-gray-50 max-h-40 overflow-y-auto">
+                        <!-- Subjects populated here -->
+                    </div>
+                </div>
+                <div id="admin-edit-student-container" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="select_student_label">Выберите ученика:</label>
+                    <select id="admin-edit-student" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="login_label">Логин</label>
+                    <input type="text" id="admin-edit-username" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="password_label">Пароль</label>
+                    <input type="text" id="admin-edit-password" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-gray-100">
+                    <button class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors" onclick="document.getElementById('admin-edit-modal').classList.add('hidden')" data-i18n="cancel">Отмена</button>
+                    <button class="px-6 py-2 bg-donishup-blue text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm transition-colors" onclick="window.adminManager.saveUserEdit()" data-i18n="save">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profile-modal" class="fullscreen-modal hidden fixed inset-0 flex items-center justify-center z-[200] bg-black/60 backdrop-blur-sm">
+        <div class="panel bg-white rounded-2xl shadow-2xl p-6 w-full max-w-[400px]">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900 m-0">Редактировать профиль</h3>
+                <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="document.getElementById('profile-modal').classList.add('hidden')">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Аватар</label>
+                    <input type="file" id="profile-avatar-input" accept="image/*" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">О себе</label>
+                    <textarea id="profile-about-input" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-y" rows="4"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-gray-100">
+                    <button class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors" onclick="document.getElementById('profile-modal').classList.add('hidden')">Отмена</button>
+                    <button class="px-6 py-2 bg-donishup-blue text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm transition-colors" onclick="window.saveProfile()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Knowledge Tree Add Topic Modal -->
+    <div id="modal-add-topic" class="fullscreen-modal hidden fixed inset-0 flex items-center justify-center z-[200] bg-black/60 backdrop-blur-sm">
+        <div class="panel bg-white rounded-2xl shadow-2xl p-6 w-full max-w-[400px]">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900 m-0" data-i18n="add_topic">Add Topic</h2>
+                <button onclick="document.getElementById('modal-add-topic').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <form id="add-topic-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="enter_topic_name">Enter topic name</label>
+                    <input type="text" id="topic-name" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="select_subject">Select Subject</label>
+                    <select id="topic-subject" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="tajik" data-i18n="subj_tajik">Tajik Language</option>
+                        <option value="russian" data-i18n="subj_russian">Russian Language</option>
+                        <option value="english" data-i18n="subj_english">English Language</option>
+                        <option value="math" data-i18n="subj_math">Mathematics</option>
+                        <option value="physics" data-i18n="subj_physics">Physics</option>
+                        <option value="chemistry" data-i18n="subj_chemistry">Chemistry</option>
+                        <option value="biology" data-i18n="subj_biology">Biology</option>
+                        <option value="geography" data-i18n="subj_geography">Geography</option>
+                        <option value="history_tj" data-i18n="subj_history_tj">History of Tajikistan</option>
+                        <option value="history_world" data-i18n="subj_history_world">World History</option>
+                        <option value="social_studies" data-i18n="subj_social_studies">Social Studies</option>
+                        <option value="informatics" data-i18n="subj_informatics">Computer Science</option>
+                        <option value="labor" data-i18n="subj_labor">Labor Training</option>
+                        <option value="pe" data-i18n="subj_pe">Physical Education</option>
+                        <option value="art_music" data-i18n="subj_art_music">Art and Music</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="select_parent">Select Parent Topic</label>
+                    <select id="topic-parent" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="" data-i18n="none">None</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-gray-100">
+                    <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors" onclick="document.getElementById('modal-add-topic').classList.add('hidden')" data-i18n="cancel">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-donishup-blue text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm transition-colors" data-i18n="confirm">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="/src/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ===============================================================
+    // Chat Messages
+    // ===============================================================
+    match /messages/{messageId} {
+      // Allow read/create for authenticated users. 
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && 
+                    request.resource.data.keys().hasAll(['sender_id', 'senderName', 'timestamp']) &&
+                    request.resource.data.sender_id is string &&
+                    request.resource.data.senderName is string &&
+                    request.resource.data.timestamp is number &&
+                    // Basic size limits to prevent abuse
+                    (!('text' in request.resource.data) || request.resource.data.text.size() < 2000) &&
+                    (!('image' in request.resource.data) || request.resource.data.image.size() < 2000000);
+      allow update, delete: if false;
+    }
+
+    // ===============================================================
+    // WebRTC Signaling
+    // ===============================================================
+    match /rooms/{roomId} {
+      allow read, write: if isAuthenticated();
+      
+      match /participants/{userId} {
+        allow read, write: if isAuthenticated();
+      }
+
+      match /calls/{callId} {
+        allow read, write: if isAuthenticated();
+
+        match /callerCandidates/{id} {
+          allow read, write: if isAuthenticated();
+        }
+        
+        match /answererCandidates/{id} {
+          allow read, write: if isAuthenticated();
+        }
+      }
+    }
+
+    // ===============================================================
+    // Typing Indicators
+    // ===============================================================
+    match /typing/{classId}/users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() &&
+                   request.resource.data.keys().hasAll(['userId', 'userName', 'isTyping', 'timestamp']) &&
+                   request.resource.data.userId is string &&
+                   request.resource.data.userName is string &&
+                   request.resource.data.isTyping is bool &&
+                   request.resource.data.timestamp is number;
+      allow delete: if isAuthenticated();
+    }
+  }
+}
